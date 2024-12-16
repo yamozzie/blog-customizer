@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef } from 'react';
 
 import { ArrowButton } from '../../ui/arrow-button/ArrowButton';
 import { Button } from '../../ui/button';
@@ -20,6 +20,8 @@ import {
 	defaultArticleState,
 } from 'src/constants/articleProps';
 
+import { useOutsideClickClose } from 'src/ui/select/hooks/useOutsideClickClose';
+
 export type ArticleParamsFormProps = {
 	setAppState: (value: ArticleStateType) => void;
 };
@@ -27,10 +29,18 @@ export type ArticleParamsFormProps = {
 export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 	const { setAppState } = props;
 
-	const [isOpened, setIsOpened] = useState<boolean>(false);
+	const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 
 	const [formState, setFormState] =
 		useState<ArticleStateType>(defaultArticleState);
+
+	const menuRef = useRef<HTMLDivElement>(null);
+
+	useOutsideClickClose({
+		isOpen: isMenuOpen,
+		rootRef: menuRef,
+		onChange: setIsMenuOpen,
+	});
 
 	const handleChange = (field: string) => {
 		return (value: OptionType) => {
@@ -57,19 +67,21 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 	return (
 		<>
 			<ArrowButton
-				isOpen={isOpened}
-				onClick={() => setIsOpened((currentIsOpened) => !currentIsOpened)}
+				isOpen={isMenuOpen}
+				onClick={() => setIsMenuOpen((currentIsOpen) => !currentIsOpen)}
 			/>
 			<div
-				onClick={() => setIsOpened(false)}
-				className={clsx(styles.overlay, isOpened && styles.overlay_open)}></div>
+				onClick={() => setIsMenuOpen(false)}
+				className={clsx(styles.overlay, { [styles.overlay_open]: isMenuOpen })}
+			></div>
 			<aside
-				className={clsx(styles.container, isOpened && styles.container_open)}>
+				ref={menuRef}
+				className={clsx(styles.container, { [styles.container_open]: isMenuOpen })}>
 				<form
 					onSubmit={handleSubmit}
 					onReset={handleReset}
 					className={styles.form}>
-					<Text weight={800} size={31}>
+					<Text weight={800} size={31} as="h2">
 						Задайте параметры
 					</Text>
 					<Select
@@ -105,7 +117,7 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 						onChange={handleChange('contentWidth')}
 					/>
 					<div className={styles.bottomContainer}>
-						<Button title='Сбросить 'htmlType='reset' type='clear' />
+						<Button title='Сбросить' htmlType='reset' type='clear' />
 						<Button title='Применить' htmlType='submit' type='apply' />
 					</div>
 				</form>
